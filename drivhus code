@@ -1,1 +1,393 @@
+//definer viable
+#include "DHT.h"
 
+#define DHTPIN 2     // Digital pin connected to the DHT sensor
+
+#define DHTTYPE DHT11   // DHT 11
+//#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+//#define DHTTYPE DHT21   // DHT 21 (AM2301)
+
+// Connect pin 1 (on the left) of the sensor to +5V
+// NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
+// to 3.3V instead of 5V!
+// Connect pin 2 of the sensor to whatever your DHTPIN is
+// Connect pin 4 (on the right) of the sensor to GROUND
+// Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
+
+// Initialize DHT sensor.
+// Note that older versions of this library took an optional third parameter to
+// tweak the timings for faster processors.  This parameter is no longer needed
+// as the current DHT reading algorithm adjusts itself to work on faster procs.
+
+DHT dht(DHTPIN, DHTTYPE);
+ 
+const int O_bit_0 = 4; //BCD kode til 7_segment display
+const int O_bit_1 = 5; 
+const int O_bit_2 = 6; 
+const int O_bit_3 = 7; 
+
+const int LE_10 = 9; //7 segment display: låser 10'er
+const int LE_1 = 10; //7 segment display: låser 1'er
+
+int sensorPin = A0;    // select the input pin for the potentiometer
+int ledPin = 13;      // select the pin for the LED
+int sensorValue = 0;  // variable to store the value coming from the sensor
+
+#include <Wire.h>
+#include "rgb_lcd.h"
+
+rgb_lcd lcd;
+
+float temp = A1;
+int temp_grader = 0;
+
+int tal = 0;
+int tal1 = 0;
+int tal10 = 0;
+
+void setup() {
+   Serial.begin(9600);
+  Serial.println("Måler");
+//definer udgange
+pinMode(O_bit_0, OUTPUT);
+pinMode(O_bit_1, OUTPUT);
+pinMode(O_bit_2, OUTPUT);
+pinMode(O_bit_3, OUTPUT);
+
+pinMode(ledPin, OUTPUT);
+
+Serial.println(F("DHTxx test!"));
+
+  dht.begin();
+
+pinMode(LE_10, OUTPUT);
+pinMode(LE_1, OUTPUT);
+
+}
+
+void loop() {
+    // put your main code here, to run repeatedly:
+
+sensorValue = analogRead(sensorPin);
+  Serial.print("Måler: ");
+  Serial.println(sensorValue);
+
+  if (sensorValue < 100){
+      // turn the ledPin on
+  digitalWrite(ledPin, HIGH);
+  }
+  else{
+  // stop the program for <sensorValue> milliseconds:
+  //delay(sensorValue);
+  // turn the ledPin off:
+  digitalWrite(ledPin, LOW);
+  }
+
+    // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  float h = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.readTemperature();
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+  float f = dht.readTemperature(true);
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t) || isnan(f)) {
+    Serial.println(F("Failed to read from DHT sensor!"));
+    return;
+  }
+
+  // Compute heat index in Fahrenheit (the default)
+  float hif = dht.computeHeatIndex(f, h);
+  // Compute heat index in Celsius (isFahreheit = false)
+  float hic = dht.computeHeatIndex(t, h, false);
+
+  Serial.print(F(" Humidity: "));
+  Serial.print(h);
+  Serial.print(F("%  Temperature: "));
+  Serial.print(t);
+  Serial.print(F("C "));
+  Serial.print(f);
+  Serial.print(F("F  Heat index: "));
+  Serial.print(hic);
+  Serial.print(F("C "));
+  Serial.print(hif);
+  Serial.println(F("F"));
+    
+  temp_grader = analogRead(temp);
+   temp_grader = map(temp_grader, 0, 1023, 0, 99);
+
+    Serial.print("Måler: ");
+    Serial.println(temp_grader);
+  //udlæs tallet 90
+if (temp_grader > 89){
+  digitalWrite(O_bit_0, HIGH);
+  digitalWrite(O_bit_1, LOW);
+  digitalWrite(O_bit_2, LOW);
+  digitalWrite(O_bit_3, HIGH);
+
+  digitalWrite(LE_10, LOW);
+  digitalWrite(LE_1, HIGH);
+  tal = temp_grader-90;
+  Serial.println("bit0 + bit3");
+  tal10 = ((temp_grader-(temp_grader-90))/10);
+}
+
+else
+if(temp_grader > 79){
+  digitalWrite(O_bit_0, LOW);
+  digitalWrite(O_bit_1, LOW);
+  digitalWrite(O_bit_2, LOW);
+  digitalWrite(O_bit_3, HIGH);
+
+  digitalWrite(LE_10, LOW);
+  digitalWrite(LE_1, HIGH);
+  tal = temp_grader-80;
+  Serial.println("bit3");
+  tal10 = ((temp_grader-(temp_grader-80))/10);
+}
+else
+if(temp_grader > 69){
+  digitalWrite(O_bit_0, HIGH);
+  digitalWrite(O_bit_1, HIGH);
+  digitalWrite(O_bit_2, HIGH);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, LOW);
+  digitalWrite(LE_1, HIGH);
+  tal = temp_grader-70;
+  Serial.println("bit0 + bit1 + bit2");
+  tal10 = ((temp_grader-(temp_grader-70))/10);
+}
+else
+if(temp_grader > 59){
+  digitalWrite(O_bit_0, LOW);
+  digitalWrite(O_bit_1, HIGH);
+  digitalWrite(O_bit_2, HIGH);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, LOW);
+  digitalWrite(LE_1, HIGH);
+  tal = temp_grader-60;
+  Serial.println("bit1 + bit2");
+  tal10 = ((temp_grader-(temp_grader-60))/10);
+}
+else
+if(temp_grader > 49){
+  digitalWrite(O_bit_0, HIGH);
+  digitalWrite(O_bit_1, LOW);
+  digitalWrite(O_bit_2, HIGH);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, LOW);
+  digitalWrite(LE_1, HIGH);
+  tal = temp_grader-50;
+  Serial.println("bit0 + bit2");
+  tal10 = ((temp_grader-(temp_grader-50))/10);
+}
+else
+if(temp_grader > 39){
+  digitalWrite(O_bit_0, LOW);
+  digitalWrite(O_bit_1, LOW);
+  digitalWrite(O_bit_2, HIGH);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, LOW);
+  digitalWrite(LE_1, HIGH);
+  tal = temp_grader-40;
+  Serial.println("bit2");
+  tal10 = ((temp_grader-(temp_grader-40))/10);
+}
+else
+if(temp_grader > 29){
+  digitalWrite(O_bit_0, HIGH);
+  digitalWrite(O_bit_1, HIGH);
+  digitalWrite(O_bit_2, LOW);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, LOW);
+  digitalWrite(LE_1, HIGH);
+  tal = temp_grader-30;
+  Serial.println("bit0 + bit1");
+  tal10 = ((temp_grader-(temp_grader-30))/10);
+}
+else
+if(temp_grader > 19){
+  digitalWrite(O_bit_0, LOW);
+  digitalWrite(O_bit_1, HIGH);
+  digitalWrite(O_bit_2, LOW);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, LOW);
+  digitalWrite(LE_1, HIGH);
+  tal = temp_grader-20;
+  Serial.println("bit1");
+  tal10 = ((temp_grader-(temp_grader-20))/10);
+}
+else
+if(temp_grader > 9){
+  digitalWrite(O_bit_0, HIGH);
+  digitalWrite(O_bit_1, LOW);
+  digitalWrite(O_bit_2, LOW);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, LOW);
+  digitalWrite(LE_1, HIGH);
+  tal = temp_grader-10;
+  Serial.println("bit0");
+  tal10 = ((temp_grader-(temp_grader-10))/10);
+}
+else{
+  digitalWrite(O_bit_0, LOW);
+  digitalWrite(O_bit_1, LOW);
+  digitalWrite(O_bit_2, LOW);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, LOW);
+  digitalWrite(LE_1, HIGH);
+  tal = temp_grader-0;
+  tal10 = 0;
+  Serial.println("ikke ti'er");
+}
+delay(100);
+//låser TE_10 og TE_1
+  digitalWrite(LE_10, HIGH);
+  digitalWrite(LE_1, HIGH);
+delay(100);
+
+if (tal > 8){
+  digitalWrite(O_bit_0, HIGH);
+  digitalWrite(O_bit_1, LOW);
+  digitalWrite(O_bit_2, LOW);
+  digitalWrite(O_bit_3, HIGH);
+
+  digitalWrite(LE_10, HIGH);
+  digitalWrite(LE_1, LOW);
+  Serial.println("bit0 + bit3");
+  tal1 = tal;
+}
+else
+if(tal > 7){
+  digitalWrite(O_bit_0, LOW);
+  digitalWrite(O_bit_1, LOW);
+  digitalWrite(O_bit_2, LOW);
+  digitalWrite(O_bit_3, HIGH);
+
+  digitalWrite(LE_10, HIGH);
+  digitalWrite(LE_1, LOW);
+  Serial.println("bit3");
+  tal1 = tal;
+}
+else
+if(tal > 6){
+  digitalWrite(O_bit_0, HIGH);
+  digitalWrite(O_bit_1, HIGH);
+  digitalWrite(O_bit_2, HIGH);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, HIGH);
+  digitalWrite(LE_1, LOW);
+  Serial.println("bit0 + bit1 + bit2");
+  tal1 = tal;
+}
+else
+if(tal > 5){
+  digitalWrite(O_bit_0, LOW);
+  digitalWrite(O_bit_1, HIGH);
+  digitalWrite(O_bit_2, HIGH);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, HIGH);
+  digitalWrite(LE_1, LOW);
+  Serial.println("bit1 + bit2");
+  tal1 = tal;
+}
+else
+if(tal > 4){
+  digitalWrite(O_bit_0, HIGH);
+  digitalWrite(O_bit_1, LOW);
+  digitalWrite(O_bit_2, HIGH);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, HIGH);
+  digitalWrite(LE_1, LOW);
+  Serial.println("bit0 + bit2");
+  tal1 = tal;
+}
+else
+if(tal > 3){
+  digitalWrite(O_bit_0, LOW);
+  digitalWrite(O_bit_1, LOW);
+  digitalWrite(O_bit_2, HIGH);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, HIGH);
+  digitalWrite(LE_1, LOW);
+  Serial.println("bit2");
+  tal1 = tal;
+}
+else
+if(tal > 2){
+  digitalWrite(O_bit_0, HIGH);
+  digitalWrite(O_bit_1, HIGH);
+  digitalWrite(O_bit_2, LOW);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, HIGH);
+  digitalWrite(LE_1, LOW);
+  Serial.println("bit0 + bit1");
+  tal1 = tal;
+}
+else
+if(tal > 1){
+  digitalWrite(O_bit_0, LOW);
+  digitalWrite(O_bit_1, HIGH);
+  digitalWrite(O_bit_2, LOW);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, HIGH);
+  digitalWrite(LE_1, LOW);
+  Serial.println("bit1");
+  tal1 = tal;
+}
+else
+if(tal > 0){
+  digitalWrite(O_bit_0, HIGH);
+  digitalWrite(O_bit_1, LOW);
+  digitalWrite(O_bit_2, LOW);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, HIGH);
+  digitalWrite(LE_1, LOW);
+  Serial.println("bit0");
+  tal1 = tal;
+}
+else{
+  digitalWrite(O_bit_0, LOW);
+  digitalWrite(O_bit_1, LOW);
+  digitalWrite(O_bit_2, LOW);
+  digitalWrite(O_bit_3, LOW);
+
+  digitalWrite(LE_10, HIGH);
+  digitalWrite(LE_1, LOW);
+  Serial.println("nul");
+  tal1 = 0;
+}
+
+delay(200);
+//låser TE_10 og TE_1
+  digitalWrite(LE_10, HIGH);
+  digitalWrite(LE_1, HIGH);
+delay(200);
+
+
+   Serial.print("tal10: ");
+   Serial.println(tal10);
+
+   Serial.print("tal1: ");
+   Serial.println(tal1);
+
+   tal = (tal10*10)+tal1;
+   Serial.print("tal: ");
+   Serial.println(tal);
+}
