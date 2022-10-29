@@ -1,4 +1,12 @@
 //definer viable
+
+#include <Servo.h>
+
+Servo myservo;  // create servo object to control a servo
+// twelve servo objects can be created on most boards
+
+int pos = 0;    // variable to store the servo position
+
 #include "DHT.h"
 
 #define DHTPIN 2     // Digital pin connected to the DHT sensor
@@ -20,6 +28,12 @@
 // as the current DHT reading algorithm adjusts itself to work on faster procs.
 
 DHT dht(DHTPIN, DHTTYPE);
+
+int vtid = 0;
+int utid = 0;
+
+int set_time = 0;
+const int pumpetrans = 12;
  
 const int O_bit_0 = 4; //BCD kode til 7_segment display
 const int O_bit_1 = 5; 
@@ -38,7 +52,7 @@ int sensorValue = 0;  // variable to store the value coming from the sensor
 
 rgb_lcd lcd;
 
-float temp = A1;
+float temp = A1; //2.2k modstand
 int temp_grader = 0;
 
 int tal = 0;
@@ -63,14 +77,30 @@ Serial.println(F("DHTxx test!"));
 pinMode(LE_10, OUTPUT);
 pinMode(LE_1, OUTPUT);
 
+pinMode(pumpetrans,OUTPUT);
+set_time = 1;
+
+vtid = 0;
+utid = 0;
+
+myservo.attach(6);
+
 }
 
 void loop() {
     // put your main code here, to run repeatedly:
 
+ vtid = vtid + 1;
+    Serial.print("Vanding: ");
+    Serial.print(vtid);
+    utid = utid + 1;
+Serial.print("Motor: ");
+    Serial.print(utid);
+
 sensorValue = analogRead(sensorPin);
   Serial.print("Måler: ");
   Serial.println(sensorValue);
+
 
   if (sensorValue < 100){
       // turn the ledPin on
@@ -113,12 +143,44 @@ sensorValue = analogRead(sensorPin);
   Serial.print(F("C "));
   Serial.print(hif);
   Serial.println(F("F"));
+
+if (vtid > 59){
+    digitalWrite(pumpetrans,HIGH);
+    vtid = 0;
+    delay(10000);
+    }
+
+if (vtid < 60){
+  digitalWrite(pumpetrans,LOW);
+  }
+
+  
     
   temp_grader = analogRead(temp);
    temp_grader = map(temp_grader, 0, 1023, 0, 99);
 
     Serial.print("Måler: ");
     Serial.println(temp_grader);
+
+if(temp_grader < 30){
+  if(utid > 9){
+    for (pos = 90; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);
+    utid = 0;
+    }}}
+
+if(temp_grader > 29){
+  if(utid > 9){
+for (pos = 0; pos <= 90; pos += 1) { // goes from 0 degrees to 180 degrees
+    // in steps of 1 degree
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15 ms for the servo to reach the position
+    utid = 0;
+  }}}
+
+
+    
   //udlæs tallet 90
 if (temp_grader > 89){
   digitalWrite(O_bit_0, HIGH);
@@ -378,7 +440,7 @@ delay(200);
 //låser TE_10 og TE_1
   digitalWrite(LE_10, HIGH);
   digitalWrite(LE_1, HIGH);
-delay(200);
+delay(600);
 
 
    Serial.print("tal10: ");
